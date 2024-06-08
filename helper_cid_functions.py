@@ -10,6 +10,15 @@ from pathlib import Path
 
 elements_list = []
 
+def add_element(elements_list, source, depth, cid, mode, file_path):
+    elements_list.append({
+        'Source': source,
+        'Depth': depth,
+        'Cid': cid,
+        'Mode': mode,
+        'File_path': file_path
+    })
+
 def check_leading_zeroes_cid(cid, unique_cids):
     if cid is not None :
         for i in range(1, 6):
@@ -91,13 +100,7 @@ def get_cid_and_add_files(source,depth,r, file_list,legal_files_dict,unique_cids
             file_path = os.path.join(r, file)
 
         if os.path.isfile(file_path):
-            elements_list.append({
-                'Source' : source,
-                'Depth': depth,
-                'Cid': cid,
-                'Mode': mode,
-                'File_path': file_path
-                })
+            add_element(elements_list,source, depth, cid, mode, file_path)
             try :
                 add_to_file_dict(cid, legal_files_dict, file_path, unique_cids)
             except :
@@ -133,3 +136,22 @@ def aup_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per
                     process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, aup_mapping_df, 'CID File')
         print("AUP Iteration Done")        
 
+def exp_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per_cid_category,exp_max_file_count_per_cid_category,exp_file_folders_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids,exp_unique_cids,exp_mapping_df) :
+    for path in exp_file_folders_list :
+            for r,_, file_list in os.walk(path):
+                relative_path = os.path.relpath(r, path)
+                depth = relative_path.count(os.sep)
+                #Pre screening -> I need to fund the cid of al 980 files in legal files and decisions 
+                # for file in file_list :
+                #     add_element(elements_list, os.path.basename(path), depth, file.split(" ")[0], 'CID File', os.path.join(r, file))
+                if path == exp_file_folders_list[0] :
+                    if r == path :
+                        process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID File')
+                    else :
+                        process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID Folder')
+                elif path == exp_file_folders_list[1]: 
+                     if r == path :
+                         process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID File')
+                     else :
+                         process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID Folder')
+    print('Exposures iteration - Decisions folder done')
