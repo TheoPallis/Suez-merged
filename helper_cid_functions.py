@@ -5,9 +5,6 @@ import re
 import pandas as pd
 from pathlib import Path
 
-
-
-
 elements_list = []
 
 def add_element(elements_list, source, depth, cid, mode, file_path):
@@ -29,26 +26,13 @@ def check_leading_zeroes_cid(cid, unique_cids):
                 return modified_cid
     return cid
 
-
-def add_to_file_dict(cid,files_dict,file_path,unique_cids):
-        cid = check_leading_zeroes_cid(cid,unique_cids) 
-        if cid.isnumeric() and cid in unique_cids:
-            # print(f"Adding {os.path.basename(file_path)} for CID {cid}")
-            if cid in files_dict:
-                files_dict[cid].append(file_path)
-            else:
-                files_dict[cid] = [file_path]
-
 def extract_8_digit_part(s):
     match = re.search(r'\b\d{8}\b', s)
     return match.group(0) if match else None
 
-
-
 def match_loan_id_to_cid(loan_id,df) :
     cid = df['Main CID'][df['Loan ID'] == loan_id].iloc[0] if not df['Main CID'][df['Loan ID'] == loan_id].empty else "Not Found"
     return cid
-
 
 def check_for_multiple_loan_cids_for_a_single_loan_id(file_loan_id,df) :
         double_cids = df['Main CID'][df['Loan ID'] == file_loan_id].tolist()
@@ -67,10 +51,6 @@ def add_to_file_dict(cid,files_dict,file_path,unique_cids):
                 else:
                     files_dict[cid] = [file_path]
 
-def extract_8_digit_part(s):
-    match = re.search(r'\b\d{8}\b', s)
-    return match.group(0) if match else None
-
 
 def get_cid_and_add_files(source,depth,r, file_list,legal_files_dict,unique_cids,df,mode) :
     base_r = os.path.basename(r)       
@@ -79,7 +59,7 @@ def get_cid_and_add_files(source,depth,r, file_list,legal_files_dict,unique_cids
         
         if mode == 'CID Folder' :
             # Get the loan id from the folder name
-            if base_r.startswith('0026') and depth == 0:
+            if base_r.startswith('0026') : #and depth in [0:2] :
                 mode = 'Loan ID'
                 folder_loan_id = base_r
                 check_for_multiple_loan_cids_for_a_single_loan_id(folder_loan_id,df)
@@ -124,6 +104,20 @@ def get_max_files_found_for_each_cid_category(all_cid_columns, max_file_count_pe
             df[f"{col} file {i + 1}"] = df[col].apply(lambda x: files_dict[x][i] if x in files_dict and len(files_dict[x]) > i else '-')
     return df    
 
+# Changes based on the passed folder list
+# def total_iteration(mode,all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per_cid_category,exp_max_file_count_per_cid_category,folders_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids,exp_unique_cids,aup_mapping_df) :
+#     for path in folders_list:
+#         for r,_, file_list in os.walk(path):
+#             if 'Mexico' not in r :
+#                 relative_path = os.path.relpath(r, path)
+#                 depth = relative_path.count(os.sep)
+#                 if r != path:
+#                     process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, aup_mapping_df, 'CID Folder')
+#                 elif r == path :
+#                     process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, aup_mapping_df, 'CID File')
+#     print("Iteration Done")      
+        
+
 def aup_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per_cid_category,exp_max_file_count_per_cid_category,aup_file_folders_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids,exp_unique_cids,aup_mapping_df) :
         # Aup iteration
         for path in aup_file_folders_list:
@@ -136,22 +130,19 @@ def aup_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per
                     process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, aup_mapping_df, 'CID File')
         print("AUP Iteration Done")        
 
-def exp_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per_cid_category,exp_max_file_count_per_cid_category,exp_file_folders_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids,exp_unique_cids,exp_mapping_df) :
-    for path in exp_file_folders_list :
+def exp_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per_cid_category,exp_max_file_count_per_cid_category,total_exp_files_folders_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids,exp_unique_cids,exp_mapping_df) :
+    for path in total_exp_files_folders_list  :
             for r,_, file_list in os.walk(path):
-                relative_path = os.path.relpath(r, path)
-                depth = relative_path.count(os.sep)
-                #Pre screening -> I need to fund the cid of al 980 files in legal files and decisions 
-                # for file in file_list :
-                #     add_element(elements_list, os.path.basename(path), depth, file.split(" ")[0], 'CID File', os.path.join(r, file))
-                if path == exp_file_folders_list[0] :
-                    if r == path :
-                        process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID File')
-                    else :
-                        process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID Folder')
-                elif path == exp_file_folders_list[1]: 
-                     if r == path :
-                         process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID File')
-                     else :
-                         process_files(depth,path, r, file_list, aup_legal_files_dict_in_aup, aup_legal_files_dict_in_exp, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID Folder')
+                if 'Mexico' not in r :
+                    relative_path = os.path.relpath(r, path)
+                    depth = relative_path.count(os.sep)
+                    # Pre screening -> I need to fund the cid of al 980 files in legal files and decisions 
+                    for file in file_list :
+                        add_element(elements_list, os.path.basename(path), depth, file.split(" ")[0], 'CID File', os.path.join(r, file))
+                    # if r == path :
+                    #     process_files(depth,path, r, file_list, exp_legal_files_dict_in_exp, exp_legal_files_dict_in_aup, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID File')
+                    # else :
+                    #     process_files(depth,path, r, file_list, exp_legal_files_dict_in_exp, exp_legal_files_dict_in_aup, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID Folder')
     print('Exposures iteration - Decisions folder done')
+
+
