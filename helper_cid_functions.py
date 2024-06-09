@@ -138,7 +138,7 @@ def exp_iteration(all_aup_cid_columns,all_exp_cid_columns,aup_max_file_count_per
                     depth = relative_path.count(os.sep)
                     # Pre screening -> I need to fund the cid of al 980 files in legal files and decisions 
                     for file in file_list :
-                        add_element(elements_list, os.path.basename(path), depth, file.split(" ")[0], 'CID File', os.path.join(r, file))
+                        add_element(elements_list, os.path.basename(path), depth, "-", 'CID File', os.path.join(r, file))
                     # if r == path :
                     #     process_files(depth,path, r, file_list, exp_legal_files_dict_in_exp, exp_legal_files_dict_in_aup, aup_unique_cids, exp_unique_cids, exp_mapping_df, 'CID File')
                     # else :
